@@ -65,8 +65,11 @@ Variable names shall start with "UserApp_" and be declared as static.
 static fnCode_type UserApp_StateMachine;            /* The state machine function pointer */
 static u32 UserApp_u32Timeout;                      /* Timeout counter used across states */
 static u8 au8TestMessage[1]={40};
-static u8 au8DataContent[] = "xxx";
-u8 counter=50;
+static u8 au8DataContent[] = "xx";
+static u8 UserApp_CursorPosition;
+u8 counter=0;
+u8 au8Message[] = "The   frequency  is:";
+u8 counter1=0;
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
@@ -105,7 +108,11 @@ void UserAppInitialize(void)
   G_stAntSetupData.AntChannelPeriodHi  = ANT_CHANNEL_PERIOD_HI_USERAPP;
   G_stAntSetupData.AntFrequency        = ANT_FREQUENCY_USERAPP;
   G_stAntSetupData.AntTxPower          = ANT_TX_POWER_USERAPP;
-  LCDCommand(LCD_HOME_CMD);  
+  UserApp_CursorPosition = LINE2_START_ADDR+8;
+  LCDMessage(LINE1_START_ADDR, au8Message);
+  LCDCommand(LINE2_START_ADDR+8);  
+  LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON | LCD_DISPLAY_CURSOR | LCD_DISPLAY_BLINK);
+
   /* If good initialization, set state to Idle */
   if( AntChannelConfig(ANT_MASTER) )
   {
@@ -156,43 +163,50 @@ State Machine Function Definitions
 static void UserAppSM_Idle(void)
 {
   counter++;
-  if(counter==50)
+   if(WasButtonPressed(BUTTON3))
+  {
+    ButtonAcknowledge(BUTTON3);
+    
+    /* Handle the two special cases or just the regular case */
+    if(UserApp_CursorPosition == LINE2_START_ADDR+9)
+    {
+      UserApp_CursorPosition = LINE2_START_ADDR+8;
+      
+    }
+    else
+    {
+      UserApp_CursorPosition++;
+    }
+    /* New position is set, so update */
+    LCDCommand(UserApp_CursorPosition);
+  } /* end AntReadData() */  
+  if(counter==50)   
   {
     counter=0;
     au8DataContent[0]=au8TestMessage[0]/10+0x30;
     au8DataContent[1]=(au8TestMessage[0]%10)+0x30;
-    au8DataContent[2]=0x30;
-  LCDMessage(LINE2_START_ADDR, au8DataContent);
+    
+    LCDMessage(LINE2_START_ADDR+8, au8DataContent);
   if( WasButtonPressed(BUTTON1) )
   {
     ButtonAcknowledge(BUTTON1);
-    au8TestMessage[0]=au8TestMessage[0]+1;
-    
+    if(UserApp_CursorPosition==LINE2_START_ADDR+8)
+    {
+        au8TestMessage[0]=au8TestMessage[0]+10;
+    }
+    else
+      au8TestMessage[0]=au8TestMessage[0]+1;
   }
   if( WasButtonPressed(BUTTON2) )
   {
     ButtonAcknowledge(BUTTON2);
-    au8TestMessage[0]=au8TestMessage[0]-1;
-    
-  }
-  if( WasButtonPressed(BUTTON3) )
-  
-  { 
-    static bool bCursorOn = FALSE;
-    ButtonAcknowledge(BUTTON3);
-    if(bCursorOn)
+   if(UserApp_CursorPosition==LINE2_START_ADDR+8)
     {
-      /* Cursor is on, so turn it off */
-      LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON);
-      bCursorOn = FALSE;
+        au8TestMessage[0]=au8TestMessage[0]-10;
     }
     else
-    {
-      /* Cursor is off, so turn it on */
-      LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON | LCD_DISPLAY_CURSOR | LCD_DISPLAY_BLINK);
-      bCursorOn = TRUE;
-   }
-  }
+      au8TestMessage[0]=au8TestMessage[0]-1;
+  } 
   if(AntRadioStatus()==ANT_OPEN )
   {
     LedOff(RED);
@@ -204,19 +218,19 @@ static void UserAppSM_Idle(void)
     LedOff(BLUE);
     LedOn(RED);
   }
-   
+  LCDCommand(UserApp_CursorPosition);
   /* Check all the buttons and update au8TestMessage according to the button state */ 
   if( AntReadData() )
   {
     /* New data message: check what it is */
     if(G_eAntApiCurrentMessageClass == ANT_DATA)
     {
-      LedOn(GREEN);
+      
       /* We got some data */
     }
     else if(G_eAntApiCurrentMessageClass == ANT_TICK)
     {
-       LedOn(WHITE);
+      
      if( WasButtonPressed(BUTTON0) )
     {
       ButtonAcknowledge(BUTTON0);
@@ -224,17 +238,23 @@ static void UserAppSM_Idle(void)
       au8TestMessage[0]=40;
     }
    }
-  } /* end AntReadData() */
-}/* end UserAppSM_Idle() */
-}
-static void UserAppSM_WaitChannelOpen(void)
-{
-  
-    UserApp_StateMachine = UserAppSM_Idle;
+ }
  
-} /* end UserAppSM_WaitChannelOpen() */
+ 
+   
+ 
+ } 
+  /* end BUTTON3 */  
 
-
+     
+    
+ 
+    
+  
+  
+} /* end UserAppSM_Idle() */
+    
+  
 
      
 
