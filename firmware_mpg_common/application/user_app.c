@@ -68,12 +68,19 @@ static u8 au8TestMessage[1]={00};
 static u8 au8DataContent[] = "xx";
 static u8 UserApp_CursorPosition;
 static u16 u16frequency[] = {0,523,586,658,697,783,879,987,262,293,329,349,392,440,494};
+static u8 u8letter[]={'A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'}; 
+static u8 u8letter1[]={'A'};
+static u8 u8letter2[]={50};
+static u8 u8letter3[]={1};
+u8 countername=1;
 u8 counter=0;
 u8 au8Message[] = "The  accent is :";
 u8 au8Message1[] = "send  up  down place";
+u8 au8Message2[] = "please input name:";
 static u8 au8TestMessage2[1]={20};
 u8 counter1=0;
 u8 counter2=1;
+u8 counter3=0;
 u8 u8match=0;
 /**********************************************************************************************************************
 Function Definitions
@@ -201,21 +208,6 @@ static void UserAppSM_Idle(void)
     }
     else
       au8TestMessage[0]=au8TestMessage[0]-1;
-  } 
-  
-    
-    
-    
-  if(AntRadioStatus()==ANT_OPEN )///////////panduanant
-  {
-    LedOff(RED);
-    
-   }
-  
-  else
-  {
-    LedOff(BLUE);
-    LedOn(RED);
   } 
   /* Check all the buttons and update au8TestMessage according to the button state */ 
   if( AntReadData() )
@@ -480,14 +472,81 @@ static void UserAppSM_Idle(void)
       UserApp_CursorPosition++;
     
     }
-    /* New position is set, so update */
-  } /* end AntReadData() */  
+  } 
 
  }
+ if( IsButtonHeld(BUTTON3, 2000) )
+  {
    
-  /* end BUTTON3 */  
+    LCDCommand(LCD_CLEAR_CMD);
+    LCDMessage(LINE1_START_ADDR, au8Message2);
+     LCDMessage(LINE2_START_ADDR, u8letter1);
+     AntQueueBroadcastMessage(u8letter2);
+     UserApp_StateMachine = UserAppSM_namemoudle;
+  }
 } /* end UserAppSM_Idle() */ 
+static void UserAppSM_namemoudle(void)
+{
+  counter3++;
+  if(counter3==10)
+  {
+    counter3=0;
    
+    if(WasButtonPressed(BUTTON1))
+    { 
+      ButtonAcknowledge(BUTTON1);
+      
+        u8letter1[0]=u8letter[countername];
+       LCDMessage(LINE2_START_ADDR, u8letter1);
+       countername++;
+       if(countername==25)
+       {
+         countername=0;
+       }
+       
+     }   
+      
+    
+    if( AntReadData() )
+  {
+    /* New data message: check what it is */
+    if(G_eAntApiCurrentMessageClass == ANT_DATA)
+    {
+      
+      /* We got some data */
+    }
+    else if(G_eAntApiCurrentMessageClass == ANT_TICK)
+    {
+      
+     if( WasButtonPressed(BUTTON2) )
+    {
+      ButtonAcknowledge(BUTTON2);
+       AntQueueBroadcastMessage(u8letter1);
+    }
+    }
+  }
+ if( WasButtonPressed(BUTTON0) )
+  {
+    ButtonAcknowledge(BUTTON0);
+    AntQueueBroadcastMessage(u8letter3);
+     LCDCommand(LCD_CLEAR_CMD);
+     LCDMessage(LINE1_START_ADDR, au8Message);
+    LCDMessage(LINE2_START_ADDR, au8Message1); 
+    UserApp_StateMachine = UserAppSM_Idle;
+  }
+  }
+}      
+       
+      
+      
+      
+      
+     
+      
+      
+     
+   
+ 
  
  
 

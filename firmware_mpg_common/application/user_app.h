@@ -67,7 +67,7 @@ void UserAppRunActiveState(void);
 State Machine Declarations
 ***********************************************************************************************************************/
 static void UserAppSM_Idle(void);    
-static void UserAppSM_WaitChannelOpen(void);
+static void UserAppSM_namemoudle(void);
 static void UserAppSM_Error(void);         
 static void UserAppSM_FailedInit(void);        
 
