@@ -64,11 +64,12 @@ Variable names shall start with "UserApp_" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp_StateMachine;            /* The state machine function pointer */
 static u32 UserApp_u32Timeout;                      /* Timeout counter used across states */
-static u8 au8TestMessage[1]={40};
+static u8 au8TestMessage[1]={00};
 static u8 au8DataContent[] = "xx";
 static u8 UserApp_CursorPosition;
 u8 counter=0;
-u8 au8Message[] = "The   frequency  is:";
+u8 au8Message[] = "The   accent  is :";
+u8 au8Message1[] = "send  up  down  ";
 u8 counter1=0;
 /**********************************************************************************************************************
 Function Definitions
@@ -108,9 +109,10 @@ void UserAppInitialize(void)
   G_stAntSetupData.AntChannelPeriodHi  = ANT_CHANNEL_PERIOD_HI_USERAPP;
   G_stAntSetupData.AntFrequency        = ANT_FREQUENCY_USERAPP;
   G_stAntSetupData.AntTxPower          = ANT_TX_POWER_USERAPP;
-  UserApp_CursorPosition = LINE2_START_ADDR+8;
+  UserApp_CursorPosition = LINE1_START_ADDR+19;
   LCDMessage(LINE1_START_ADDR, au8Message);
-  LCDCommand(LINE2_START_ADDR+8);  
+  LCDCommand(LINE1_START_ADDR+19);  
+  LCDMessage(LINE2_START_ADDR, au8Message1); 
   LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON | LCD_DISPLAY_CURSOR | LCD_DISPLAY_BLINK);
 
   /* If good initialization, set state to Idle */
@@ -162,35 +164,19 @@ State Machine Function Definitions
 /* Wait for a message to be queued */
 static void UserAppSM_Idle(void)
 {
-  counter++;
-   if(WasButtonPressed(BUTTON3))
-  {
-    ButtonAcknowledge(BUTTON3);
-    
-    /* Handle the two special cases or just the regular case */
-    if(UserApp_CursorPosition == LINE2_START_ADDR+9)
-    {
-      UserApp_CursorPosition = LINE2_START_ADDR+8;
-      
-    }
-    else
-    {
-      UserApp_CursorPosition++;
-    }
-    /* New position is set, so update */
-    LCDCommand(UserApp_CursorPosition);
-  } /* end AntReadData() */  
+    counter++;
   if(counter==50)   
   {
+    
     counter=0;
     au8DataContent[0]=au8TestMessage[0]/10+0x30;
     au8DataContent[1]=(au8TestMessage[0]%10)+0x30;
-    
-    LCDMessage(LINE2_START_ADDR+8, au8DataContent);
+    LCDMessage(LINE1_START_ADDR+18, au8DataContent);
+   
   if( WasButtonPressed(BUTTON1) )
   {
     ButtonAcknowledge(BUTTON1);
-    if(UserApp_CursorPosition==LINE2_START_ADDR+8)
+    if(UserApp_CursorPosition==LINE1_START_ADDR+18)
     {
         au8TestMessage[0]=au8TestMessage[0]+10;
     }
@@ -200,25 +186,24 @@ static void UserAppSM_Idle(void)
   if( WasButtonPressed(BUTTON2) )
   {
     ButtonAcknowledge(BUTTON2);
-   if(UserApp_CursorPosition==LINE2_START_ADDR+8)
+   if(UserApp_CursorPosition==LINE1_START_ADDR+18)
     {
         au8TestMessage[0]=au8TestMessage[0]-10;
     }
     else
       au8TestMessage[0]=au8TestMessage[0]-1;
   } 
-  if(AntRadioStatus()==ANT_OPEN )
+  if(AntRadioStatus()==ANT_OPEN )///////////panduanant
   {
     LedOff(RED);
     LedOn(BLUE);
-   
-  }
+   }
+  
   else
   {
     LedOff(BLUE);
     LedOn(RED);
-  }
-  LCDCommand(UserApp_CursorPosition);
+  } 
   /* Check all the buttons and update au8TestMessage according to the button state */ 
   if( AntReadData() )
   {
@@ -235,24 +220,41 @@ static void UserAppSM_Idle(void)
     {
       ButtonAcknowledge(BUTTON0);
       AntQueueBroadcastMessage(au8TestMessage);
-      au8TestMessage[0]=40;
+      au8TestMessage[0]=00;
     }
    }
  }
- 
- 
+ } 
+  if(WasButtonPressed(BUTTON3))
+  {
+    ButtonAcknowledge(BUTTON3);
+    
+    /* Handle the two special cases or just the regular case */
+    if(UserApp_CursorPosition == LINE1_START_ADDR+19)
+    {
+      UserApp_CursorPosition = LINE1_START_ADDR+18;
+      
+    }
+    else
+    {
+      UserApp_CursorPosition++;
+    }
+    /* New position is set, so update */
+  } /* end AntReadData() */  
+  
+  /* end BUTTON3 */  
+} /* end UserAppSM_Idle() */ 
    
  
- } 
-  /* end BUTTON3 */  
+ 
 
      
     
  
     
   
-  
-} /* end UserAppSM_Idle() */
+ 
+
     
   
 
