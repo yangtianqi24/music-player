@@ -67,10 +67,14 @@ static u32 UserApp_u32Timeout;                      /* Timeout counter used acro
 static u8 au8TestMessage[1]={00};
 static u8 au8DataContent[] = "xx";
 static u8 UserApp_CursorPosition;
+static u16 u16frequency[] = {0,523,586,658,697,783,879,987,262,293,329,349,392,440,494};
 u8 counter=0;
-u8 au8Message[] = "The   accent  is :";
-u8 au8Message1[] = "send  up  down  ";
+u8 au8Message[] = "The  accent is :";
+u8 au8Message1[] = "send  up  down place";
+static u8 au8TestMessage2[1]={20};
 u8 counter1=0;
+u8 counter2=1;
+u8 u8match=0;
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
@@ -109,12 +113,11 @@ void UserAppInitialize(void)
   G_stAntSetupData.AntChannelPeriodHi  = ANT_CHANNEL_PERIOD_HI_USERAPP;
   G_stAntSetupData.AntFrequency        = ANT_FREQUENCY_USERAPP;
   G_stAntSetupData.AntTxPower          = ANT_TX_POWER_USERAPP;
+   LCDCommand(LCD_CLEAR_CMD);
   UserApp_CursorPosition = LINE1_START_ADDR+19;
   LCDMessage(LINE1_START_ADDR, au8Message);
-  LCDCommand(LINE1_START_ADDR+19);  
   LCDMessage(LINE2_START_ADDR, au8Message1); 
-  LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON | LCD_DISPLAY_CURSOR | LCD_DISPLAY_BLINK);
-
+  PWMAudioOn(BUZZER1);
   /* If good initialization, set state to Idle */
   if( AntChannelConfig(ANT_MASTER) )
   {
@@ -126,7 +129,7 @@ void UserAppInitialize(void)
     /* The task isn't properly initialized, so shut it down and don't run */
     UserApp_StateMachine = UserAppSM_FailedInit;
   }
- 
+ LCDCommand(LINE1_START_ADDR+19);  
 } /* end UserAppInitialize() */
 
 
@@ -164,22 +167,28 @@ State Machine Function Definitions
 /* Wait for a message to be queued */
 static void UserAppSM_Idle(void)
 {
-    counter++;
-  if(counter==50)   
+   counter++;
+ 
+   if(counter==20)
   {
-    
+    counter1++;
+    if( counter1==50)
+    {
+       counter1=0;
+     PWMAudioSetFrequency(BUZZER1, 0); 
+    }
     counter=0;
     au8DataContent[0]=au8TestMessage[0]/10+0x30;
     au8DataContent[1]=(au8TestMessage[0]%10)+0x30;
     LCDMessage(LINE1_START_ADDR+18, au8DataContent);
-   
-  if( WasButtonPressed(BUTTON1) )
-  {
-    ButtonAcknowledge(BUTTON1);
-    if(UserApp_CursorPosition==LINE1_START_ADDR+18)
+    
+     if( WasButtonPressed(BUTTON1) )
     {
+      ButtonAcknowledge(BUTTON1);
+      if(UserApp_CursorPosition==LINE1_START_ADDR+18)
+     {
         au8TestMessage[0]=au8TestMessage[0]+10;
-    }
+     }
     else
       au8TestMessage[0]=au8TestMessage[0]+1;
   }
@@ -193,10 +202,14 @@ static void UserAppSM_Idle(void)
     else
       au8TestMessage[0]=au8TestMessage[0]-1;
   } 
+  
+    
+    
+    
   if(AntRadioStatus()==ANT_OPEN )///////////panduanant
   {
     LedOff(RED);
-    LedOn(BLUE);
+    
    }
   
   else
@@ -219,12 +232,239 @@ static void UserAppSM_Idle(void)
      if( WasButtonPressed(BUTTON0) )
     {
       ButtonAcknowledge(BUTTON0);
+      if(u8match==au8TestMessage[0])
+        {
+              
+              counter2++;
+         }
+      else
+      {
+        counter2=1;
+      }
+       u8match=au8TestMessage[0];
+      if(au8TestMessage[0]<10)
+      {
+        au8TestMessage[0]=au8TestMessage[0]%10;
+      }
+     
+       switch(au8TestMessage[0])
+      {
+        case 0: /* white */
+          LedOn(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOn(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+
+        case 1: /* purple */
+          LedOn(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOn(PURPLE);
+          LedOff(WHITE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          
+        case 2: /* blue */
+          LedOff(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOn(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          
+        case 3: /* cyan */
+          LedOff(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOn(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1,u16frequency[au8TestMessage[0]]);
+          break;
+          
+        case 4: /* green */
+          LedOff(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOn(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          
+        case 5: /* yellow */
+          LedOn(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOn(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          
+        case 6: /* red */
+          LedOn(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOn(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          
+        case 7: 
+          LedOn(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOn(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+        case 8:   
+         LedOff(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOn(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          case 9:   
+           LedOff(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOn(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+           case 10:   
+          LedOff(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOn(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+           case 11:   
+          LedOff(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOn(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          case 12:   
+          LedOn(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOn(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          case 13:   
+           LedOn(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOn(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          case 14:   
+          LedOn(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOn(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+      } /* end switch */
+      if(counter2%2==0)
+      {
+        AntQueueBroadcastMessage(au8TestMessage2);
+      }
+      else
+      {
       AntQueueBroadcastMessage(au8TestMessage);
+      }
       au8TestMessage[0]=00;
     }
    }
  }
- } 
+
   if(WasButtonPressed(BUTTON3))
   {
     ButtonAcknowledge(BUTTON3);
@@ -238,10 +478,13 @@ static void UserAppSM_Idle(void)
     else
     {
       UserApp_CursorPosition++;
+    
     }
     /* New position is set, so update */
   } /* end AntReadData() */  
-  
+
+ }
+   
   /* end BUTTON3 */  
 } /* end UserAppSM_Idle() */ 
    
