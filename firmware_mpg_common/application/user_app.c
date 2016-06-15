@@ -64,20 +64,22 @@ Variable names shall start with "UserApp_" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp_StateMachine;            /* The state machine function pointer */
 static u32 UserApp_u32Timeout;                      /* Timeout u8counter used across states */
-static u8 au8TestMessage[1]={00};
-static u8 au8DataContent[] = "xx";
-static u8 UserApp_CursorPosition;
-static u16 u16frequency[] = {0,523,586,658,697,783,879,987,262,293,329,349,392,440,494};
+static u8 au8TestMessage[1]={0};
+static u8 au8TestMessage1[1]={0};
+static u8 au8DataContent[1] = {0};
+static u16 u16frequency[] = {0,523,586,658,697,783,879,987,262,293,329,349,392,440,494,1045,1171,1316,1393,1563,1755,1971};
 static u8 u8letter[]={'A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','\0'}; 
-static u8 u8letter1[]={'A','\0'};
+static u8 u8letter1[]="A";
 static u8 u8letter2[]={50};
 static u8 u8letter3[]={200};
-static u8 u8au8TestMessage2[1]={20};
+static u8 u8au8TestMessage2[1]={30};
 static u8 u8u8countername=1;
 static u8 u8au8Message[] = "The  accent is :";
-static u8 u8au8Message1[] = "send  up  down place";
+static u8 u8au8Message1[] = "send  up  low  high";
 static u8 u8au8Message2[] = "please input name:";
 static u8 u8au8Message3[] = "Back  up  small Send";
+static u8 u8au8Message4[] = "H";
+static u8 u8au8Message5[] = "L";
 static u8 u8counter1buzzeroff=0;
 static u8 u8counter=0;
 static u8 u8counter2=1;                     /*to judge digital*/
@@ -124,7 +126,6 @@ void UserAppInitialize(void)
   G_stAntSetupData.AntFrequency        = ANT_FREQUENCY_USERAPP;
   G_stAntSetupData.AntTxPower          = ANT_TX_POWER_USERAPP;
   LCDCommand(LCD_CLEAR_CMD);
-  UserApp_CursorPosition = LINE1_START_ADDR+19;
   LCDMessage(LINE1_START_ADDR, u8au8Message);
   LCDMessage(LINE2_START_ADDR, u8au8Message1); 
   PWMAudioOn(BUZZER1);
@@ -139,7 +140,6 @@ void UserAppInitialize(void)
     /* The task isn't properly initialized, so shut it down and don't run */
     UserApp_StateMachine = UserAppSM_FailedInit;
   }
- LCDCommand(LINE1_START_ADDR+19);  
 } /* end UserAppInitialize() */
 
 
@@ -179,38 +179,47 @@ static void UserAppSM_Idle(void)
 {
    u8counter++;
    u8counter1buzzeroff++;
-   if( u8counter1buzzeroff==200)
+ if( u8counter1buzzeroff==200)
    {
      u8counter1buzzeroff=0;
      PWMAudioSetFrequency(BUZZER1, 0); 
    }
   if(u8counter==20)
   {
+   
     u8counter=0;
-    au8DataContent[0]=au8TestMessage[0]/10+0x30;
-    au8DataContent[1]=(au8TestMessage[0]%10)+0x30;
-    LCDMessage(LINE1_START_ADDR+18, au8DataContent);
+    au8TestMessage1[0]=au8TestMessage[0];
+    if(au8TestMessage[0]>7&&au8TestMessage[0]<15)
+    {
+       au8TestMessage1[0]=au8TestMessage1[0]-7;
+       
+    }
+    if(au8TestMessage[0]>14&&au8TestMessage[0]<22)
+    {
+      au8TestMessage1[0]=au8TestMessage1[0]-14;
+    }
+     au8DataContent[0]=au8TestMessage1[0]+0x30;
+     LCDMessage(LINE1_START_ADDR+19, au8DataContent);
     if( WasButtonPressed(BUTTON1) )
     {
       ButtonAcknowledge(BUTTON1);
-      if(UserApp_CursorPosition==LINE1_START_ADDR+18)
-     {
-        au8TestMessage[0]=au8TestMessage[0]+10;
-     }
-    else
       au8TestMessage[0]=au8TestMessage[0]+1;
-  }
+      if(au8TestMessage[0]==8)
+      {
+        au8TestMessage[0]=0;
+      }
+    }
   if( WasButtonPressed(BUTTON2) )
   {
     ButtonAcknowledge(BUTTON2);
-   if(UserApp_CursorPosition==LINE1_START_ADDR+18)
-    {
-        au8TestMessage[0]=au8TestMessage[0]-10;
-    }
-    else
-    {
-      au8TestMessage[0]=au8TestMessage[0]-1;
-    }
+    LCDMessage(LINE1_START_ADDR+17, u8au8Message5);
+    au8TestMessage[0]=au8TestMessage[0]+7;
+  } 
+  if( WasButtonPressed(BUTTON3) )
+  {
+    ButtonAcknowledge(BUTTON3);
+    LCDMessage(LINE1_START_ADDR+17, u8au8Message4);
+    au8TestMessage[0]=au8TestMessage[0]+14;
   } 
   /* Check all the buttons and update au8TestMessage according to the button state */ 
   if( AntReadData() )
@@ -227,20 +236,18 @@ static void UserAppSM_Idle(void)
      if( WasButtonPressed(BUTTON0) )
     {
       ButtonAcknowledge(BUTTON0);
+      LCDClearChars(LINE1_START_ADDR + 17, 1);
       if(u8matchconserver==au8TestMessage[0])
         {
-              
               u8counter2++;
+              
          }
       else
       {
         u8counter2=1;
       }
        u8matchconserver=au8TestMessage[0];
-      if(au8TestMessage[0]<10)
-      {
-        au8TestMessage[0]=au8TestMessage[0]%10;
-      }
+      
      
        switch(au8TestMessage[0])
       {
@@ -355,20 +362,20 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-      case 8:   /*BLUE*/
-         LedOff(LCD_RED);
+       case 8: /* purple */
+          LedOn(LCD_RED);
           LedOff(LCD_GREEN);
           LedOn(LCD_BLUE);
+          LedOn(PURPLE);
           LedOff(WHITE);
-          LedOff(PURPLE);
-          LedOn(BLUE);
+          LedOff(BLUE);
           LedOff(CYAN);
           LedOff(GREEN);
           LedOff(YELLOW);
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-      case 9:   /**/
+      case 9: /* blue */
           LedOff(LCD_RED);
           LedOff(LCD_GREEN);
           LedOn(LCD_BLUE);
@@ -381,7 +388,7 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-      case 10:   
+     case 10: /* cyan */
           LedOff(LCD_RED);
           LedOn(LCD_GREEN);
           LedOn(LCD_BLUE);
@@ -392,9 +399,9 @@ static void UserAppSM_Idle(void)
           LedOff(GREEN);
           LedOff(YELLOW);
           LedOff(ORANGE);
-          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          PWMAudioSetFrequency(BUZZER1,u16frequency[au8TestMessage[0]]);
           break;
-      case 11:   
+     case 11: /* green */
           LedOff(LCD_RED);
           LedOn(LCD_GREEN);
           LedOff(LCD_BLUE);
@@ -407,7 +414,7 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-      case 12:   
+     case 12: /* yellow */
           LedOn(LCD_RED);
           LedOn(LCD_GREEN);
           LedOff(LCD_BLUE);
@@ -420,7 +427,7 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-      case 13:   
+      case 13: /* red */
           LedOn(LCD_RED);
           LedOff(LCD_GREEN);
           LedOff(LCD_BLUE);
@@ -433,7 +440,101 @@ static void UserAppSM_Idle(void)
           LedOn(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-      case 14:   
+      case 14: /*WHITE*/
+          LedOn(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOn(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+           case 15: /* purple */
+          LedOn(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOn(PURPLE);
+          LedOff(WHITE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          case 16: /* blue */
+          LedOff(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOn(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          case 17: /* cyan */
+          LedOff(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOn(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOn(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1,u16frequency[au8TestMessage[0]]);
+          break;
+          case 18: /* green */
+          LedOff(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOn(GREEN);
+          LedOff(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          
+        case 19: /* yellow */
+          LedOn(LCD_RED);
+          LedOn(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOn(YELLOW);
+          LedOff(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          
+       case 20: /* red */
+          LedOn(LCD_RED);
+          LedOff(LCD_GREEN);
+          LedOff(LCD_BLUE);
+          LedOff(WHITE);
+          LedOff(PURPLE);
+          LedOff(BLUE);
+          LedOff(CYAN);
+          LedOff(GREEN);
+          LedOff(YELLOW);
+          LedOn(ORANGE);
+          PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
+          break;
+          
+       case 21: /*WHITE*/
           LedOn(LCD_RED);
           LedOn(LCD_GREEN);
           LedOn(LCD_BLUE);
@@ -455,33 +556,14 @@ static void UserAppSM_Idle(void)
       {
       AntQueueBroadcastMessage(au8TestMessage);
       }
-      au8TestMessage[0]=00;
+      au8TestMessage[0]=0;
     }
    }
  }
  /*change the place of number*/
-if(WasButtonPressed(BUTTON3))
-  {
-    ButtonAcknowledge(BUTTON3);
-    
-    /* Handle the two special cases or just the regular case */
-    if(UserApp_CursorPosition == LINE1_START_ADDR+19)
-    {
-      UserApp_CursorPosition = LINE1_START_ADDR+18;
-      
-    }
-    else
-    {
-      UserApp_CursorPosition++;
-    
-    }
-  } 
-}
 /*go to input letter*/
  if( IsButtonHeld(BUTTON3, 2000) )
   {
-  
-    LCDCommand(LCD_CLEAR_CMD);
     LedOn(LCD_RED);
     LedOn(LCD_GREEN);
     LedOn(LCD_BLUE);
@@ -493,6 +575,7 @@ if(WasButtonPressed(BUTTON3))
     LedOff(YELLOW);
     LedOff(ORANGE);
     LedOff(RED);
+    LCDCommand(LCD_CLEAR_CMD);
     LCDMessage(LINE1_START_ADDR, u8au8Message2);
     LCDMessage(LINE2_START_ADDR, u8au8Message3);
     LCDMessage(LINE1_START_ADDR+19, u8letter1);
@@ -500,9 +583,9 @@ if(WasButtonPressed(BUTTON3))
     AntQueueBroadcastMessage(u8letter2);
     UserApp_StateMachine = UserAppSM_namemoudle;
     u8counter=0;
-    
-  }
+   }
 } /* end UserAppSM_Idle() */ 
+}
 
 
 /*-------------------------------------------------------------------------------------------------------------------*/
@@ -576,32 +659,6 @@ static void UserAppSM_namemoudle(void)
   }
  }
 }      
-       
-      
-      
-      
-      
-     
-      
-      
-     
-   
- 
- 
- 
-
-     
-    
- 
-    
-  
- 
-
-    
-  
-
-     
-
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Handle an error */
 static void UserAppSM_Error(void)          
