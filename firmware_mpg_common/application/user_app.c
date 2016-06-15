@@ -68,8 +68,8 @@ static u8 au8TestMessage[1]={00};
 static u8 au8DataContent[] = "xx";
 static u8 UserApp_CursorPosition;
 static u16 u16frequency[] = {0,523,586,658,697,783,879,987,262,293,329,349,392,440,494};
-static u8 u8letter[]={'A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'}; 
-static u8 u8letter1[]={'A'};
+static u8 u8letter[]={'A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','\0'}; 
+static u8 u8letter1[]={'A','\0'};
 static u8 u8letter2[]={50};
 static u8 u8letter3[]={1};
 u8 countername=1;
@@ -77,6 +77,7 @@ u8 counter=0;
 u8 au8Message[] = "The  accent is :";
 u8 au8Message1[] = "send  up  down place";
 u8 au8Message2[] = "please input name:";
+u8 au8Message3[] = "Back  up  small Send";
 static u8 au8TestMessage2[1]={20};
 u8 counter1=0;
 u8 counter2=1;
@@ -480,7 +481,8 @@ static void UserAppSM_Idle(void)
    
     LCDCommand(LCD_CLEAR_CMD);
     LCDMessage(LINE1_START_ADDR, au8Message2);
-     LCDMessage(LINE2_START_ADDR, u8letter1);
+    LCDMessage(LINE2_START_ADDR, au8Message3);
+     LCDMessage(LINE1_START_ADDR+19, u8letter1);
      AntQueueBroadcastMessage(u8letter2);
      UserApp_StateMachine = UserAppSM_namemoudle;
   }
@@ -488,25 +490,31 @@ static void UserAppSM_Idle(void)
 static void UserAppSM_namemoudle(void)
 {
   counter3++;
-  if(counter3==10)
+  if(counter3==20)
   {
     counter3=0;
-   
+   LCDMessage(LINE1_START_ADDR+19, u8letter1);
     if(WasButtonPressed(BUTTON1))
     { 
       ButtonAcknowledge(BUTTON1);
-      
-        u8letter1[0]=u8letter[countername];
-       LCDMessage(LINE2_START_ADDR, u8letter1);
+       u8letter1[0]=u8letter[countername];
        countername++;
        if(countername==25)
        {
          countername=0;
        }
-       
      }   
-      
-    
+       
+
+    if(WasButtonPressed(BUTTON2))
+    { 
+      ButtonAcknowledge(BUTTON2);
+      u8letter1[0]=u8letter1[0]+32;
+    }
+   
+   
+   
+  
     if( AntReadData() )
   {
     /* New data message: check what it is */
@@ -518,16 +526,16 @@ static void UserAppSM_namemoudle(void)
     else if(G_eAntApiCurrentMessageClass == ANT_TICK)
     {
       
-     if( WasButtonPressed(BUTTON2) )
+     if( WasButtonPressed(BUTTON3) )
     {
-      ButtonAcknowledge(BUTTON2);
+      ButtonAcknowledge(BUTTON3);
        AntQueueBroadcastMessage(u8letter1);
     }
     }
   }
- if( WasButtonPressed(BUTTON0) )
+ if( WasButtonPressed(BUTTON0))
   {
-    ButtonAcknowledge(BUTTON0);
+   ButtonAcknowledge(BUTTON0);
     AntQueueBroadcastMessage(u8letter3);
      LCDCommand(LCD_CLEAR_CMD);
      LCDMessage(LINE1_START_ADDR, au8Message);
