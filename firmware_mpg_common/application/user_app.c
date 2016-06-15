@@ -63,7 +63,7 @@ Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp_" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp_StateMachine;            /* The state machine function pointer */
-static u32 UserApp_u32Timeout;                      /* Timeout counter used across states */
+static u32 UserApp_u32Timeout;                      /* Timeout u8counter used across states */
 static u8 au8TestMessage[1]={00};
 static u8 au8DataContent[] = "xx";
 static u8 UserApp_CursorPosition;
@@ -71,18 +71,20 @@ static u16 u16frequency[] = {0,523,586,658,697,783,879,987,262,293,329,349,392,4
 static u8 u8letter[]={'A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','\0'}; 
 static u8 u8letter1[]={'A','\0'};
 static u8 u8letter2[]={50};
-static u8 u8letter3[]={1};
-u8 countername=1;
-u8 counter=0;
-u8 au8Message[] = "The  accent is :";
-u8 au8Message1[] = "send  up  down place";
-u8 au8Message2[] = "please input name:";
-u8 au8Message3[] = "Back  up  small Send";
-static u8 au8TestMessage2[1]={20};
-u8 counter1=0;
-u8 counter2=1;
-u8 counter3=0;
-u8 u8match=0;
+static u8 u8letter3[]={200};
+static u8 u8au8TestMessage2[1]={20};
+static u8 u8u8countername=1;
+static u8 u8au8Message[] = "The  accent is :";
+static u8 u8au8Message1[] = "send  up  down place";
+static u8 u8au8Message2[] = "please input name:";
+static u8 u8au8Message3[] = "Back  up  small Send";
+static u8 u8counter1buzzeroff=0;
+static u8 u8counter=0;
+static u8 u8counter2=1;                     /*to judge digital*/
+static u8 u8counter3timer=0;
+static u8 u8counter4=1;                     /*to judge digital*/
+static u8 u8matchconserver=0;                        /*to conserver*/
+static u8 u8matchconserver1=0;
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
@@ -121,10 +123,10 @@ void UserAppInitialize(void)
   G_stAntSetupData.AntChannelPeriodHi  = ANT_CHANNEL_PERIOD_HI_USERAPP;
   G_stAntSetupData.AntFrequency        = ANT_FREQUENCY_USERAPP;
   G_stAntSetupData.AntTxPower          = ANT_TX_POWER_USERAPP;
-   LCDCommand(LCD_CLEAR_CMD);
+  LCDCommand(LCD_CLEAR_CMD);
   UserApp_CursorPosition = LINE1_START_ADDR+19;
-  LCDMessage(LINE1_START_ADDR, au8Message);
-  LCDMessage(LINE2_START_ADDR, au8Message1); 
+  LCDMessage(LINE1_START_ADDR, u8au8Message);
+  LCDMessage(LINE2_START_ADDR, u8au8Message1); 
   PWMAudioOn(BUZZER1);
   /* If good initialization, set state to Idle */
   if( AntChannelConfig(ANT_MASTER) )
@@ -175,22 +177,20 @@ State Machine Function Definitions
 /* Wait for a message to be queued */
 static void UserAppSM_Idle(void)
 {
-   counter++;
- 
-   if(counter==20)
-  {
-    counter1++;
-    if( counter1==50)
-    {
-       counter1=0;
+   u8counter++;
+   u8counter1buzzeroff++;
+   if( u8counter1buzzeroff==200)
+   {
+     u8counter1buzzeroff=0;
      PWMAudioSetFrequency(BUZZER1, 0); 
-    }
-    counter=0;
+   }
+  if(u8counter==20)
+  {
+    u8counter=0;
     au8DataContent[0]=au8TestMessage[0]/10+0x30;
     au8DataContent[1]=(au8TestMessage[0]%10)+0x30;
     LCDMessage(LINE1_START_ADDR+18, au8DataContent);
-    
-     if( WasButtonPressed(BUTTON1) )
+    if( WasButtonPressed(BUTTON1) )
     {
       ButtonAcknowledge(BUTTON1);
       if(UserApp_CursorPosition==LINE1_START_ADDR+18)
@@ -208,7 +208,9 @@ static void UserAppSM_Idle(void)
         au8TestMessage[0]=au8TestMessage[0]-10;
     }
     else
+    {
       au8TestMessage[0]=au8TestMessage[0]-1;
+    }
   } 
   /* Check all the buttons and update au8TestMessage according to the button state */ 
   if( AntReadData() )
@@ -225,16 +227,16 @@ static void UserAppSM_Idle(void)
      if( WasButtonPressed(BUTTON0) )
     {
       ButtonAcknowledge(BUTTON0);
-      if(u8match==au8TestMessage[0])
+      if(u8matchconserver==au8TestMessage[0])
         {
               
-              counter2++;
+              u8counter2++;
          }
       else
       {
-        counter2=1;
+        u8counter2=1;
       }
-       u8match=au8TestMessage[0];
+       u8matchconserver=au8TestMessage[0];
       if(au8TestMessage[0]<10)
       {
         au8TestMessage[0]=au8TestMessage[0]%10;
@@ -326,7 +328,7 @@ static void UserAppSM_Idle(void)
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
           
-        case 6: /* red */
+       case 6: /* red */
           LedOn(LCD_RED);
           LedOff(LCD_GREEN);
           LedOff(LCD_BLUE);
@@ -340,7 +342,7 @@ static void UserAppSM_Idle(void)
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
           
-        case 7: 
+       case 7: /*WHITE*/
           LedOn(LCD_RED);
           LedOn(LCD_GREEN);
           LedOn(LCD_BLUE);
@@ -353,7 +355,7 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-        case 8:   
+      case 8:   /*BLUE*/
          LedOff(LCD_RED);
           LedOff(LCD_GREEN);
           LedOn(LCD_BLUE);
@@ -366,8 +368,8 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-          case 9:   
-           LedOff(LCD_RED);
+      case 9:   /**/
+          LedOff(LCD_RED);
           LedOff(LCD_GREEN);
           LedOn(LCD_BLUE);
           LedOff(WHITE);
@@ -379,7 +381,7 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-           case 10:   
+      case 10:   
           LedOff(LCD_RED);
           LedOn(LCD_GREEN);
           LedOn(LCD_BLUE);
@@ -392,7 +394,7 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-           case 11:   
+      case 11:   
           LedOff(LCD_RED);
           LedOn(LCD_GREEN);
           LedOff(LCD_BLUE);
@@ -405,7 +407,7 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-          case 12:   
+      case 12:   
           LedOn(LCD_RED);
           LedOn(LCD_GREEN);
           LedOff(LCD_BLUE);
@@ -418,8 +420,8 @@ static void UserAppSM_Idle(void)
           LedOff(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-          case 13:   
-           LedOn(LCD_RED);
+      case 13:   
+          LedOn(LCD_RED);
           LedOff(LCD_GREEN);
           LedOff(LCD_BLUE);
           LedOff(WHITE);
@@ -431,7 +433,7 @@ static void UserAppSM_Idle(void)
           LedOn(ORANGE);
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
-          case 14:   
+      case 14:   
           LedOn(LCD_RED);
           LedOn(LCD_GREEN);
           LedOn(LCD_BLUE);
@@ -445,9 +447,9 @@ static void UserAppSM_Idle(void)
           PWMAudioSetFrequency(BUZZER1, u16frequency[au8TestMessage[0]]);
           break;
       } /* end switch */
-      if(counter2%2==0)
+      if(u8counter2%2==0)
       {
-        AntQueueBroadcastMessage(au8TestMessage2);
+        AntQueueBroadcastMessage(u8au8TestMessage2);
       }
       else
       {
@@ -457,8 +459,8 @@ static void UserAppSM_Idle(void)
     }
    }
  }
-
-  if(WasButtonPressed(BUTTON3))
+ /*change the place of number*/
+if(WasButtonPressed(BUTTON3))
   {
     ButtonAcknowledge(BUTTON3);
     
@@ -474,48 +476,60 @@ static void UserAppSM_Idle(void)
     
     }
   } 
-
- }
+}
+/*go to input letter*/
  if( IsButtonHeld(BUTTON3, 2000) )
   {
-   
+  
     LCDCommand(LCD_CLEAR_CMD);
-    LCDMessage(LINE1_START_ADDR, au8Message2);
-    LCDMessage(LINE2_START_ADDR, au8Message3);
-     LCDMessage(LINE1_START_ADDR+19, u8letter1);
-     AntQueueBroadcastMessage(u8letter2);
-     UserApp_StateMachine = UserAppSM_namemoudle;
+    LedOn(LCD_RED);
+    LedOn(LCD_GREEN);
+    LedOn(LCD_BLUE);
+    LedOff(WHITE);
+    LedOff(PURPLE);
+    LedOff(BLUE);
+    LedOff(CYAN);
+    LedOff(GREEN);
+    LedOff(YELLOW);
+    LedOff(ORANGE);
+    LedOff(RED);
+    LCDMessage(LINE1_START_ADDR, u8au8Message2);
+    LCDMessage(LINE2_START_ADDR, u8au8Message3);
+    LCDMessage(LINE1_START_ADDR+19, u8letter1);
+    u8counter3timer=0;
+    AntQueueBroadcastMessage(u8letter2);
+    UserApp_StateMachine = UserAppSM_namemoudle;
+    u8counter=0;
+    
   }
 } /* end UserAppSM_Idle() */ 
+
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+/* change letter and send lettter */
 static void UserAppSM_namemoudle(void)
 {
-  counter3++;
-  if(counter3==20)
+  u8counter3timer++;
+  if(u8counter3timer==20)
   {
-    counter3=0;
+    u8counter3timer=0;
    LCDMessage(LINE1_START_ADDR+19, u8letter1);
     if(WasButtonPressed(BUTTON1))
     { 
       ButtonAcknowledge(BUTTON1);
-       u8letter1[0]=u8letter[countername];
-       countername++;
-       if(countername==25)
+       u8letter1[0]=u8letter[u8u8countername];
+       u8u8countername++;
+       if(u8u8countername==25)
        {
-         countername=0;
+         u8u8countername=0;
        }
      }   
-       
-
     if(WasButtonPressed(BUTTON2))
     { 
       ButtonAcknowledge(BUTTON2);
       u8letter1[0]=u8letter1[0]+32;
     }
-   
-   
-   
-  
-    if( AntReadData() )
+   if( AntReadData() )
   {
     /* New data message: check what it is */
     if(G_eAntApiCurrentMessageClass == ANT_DATA)
@@ -529,20 +543,38 @@ static void UserAppSM_namemoudle(void)
      if( WasButtonPressed(BUTTON3) )
     {
       ButtonAcknowledge(BUTTON3);
-       AntQueueBroadcastMessage(u8letter1);
-    }
-    }
-  }
+     if(u8matchconserver1== u8letter1[0])
+        {
+           u8counter4++;
+        }
+      else
+      {
+        u8counter4=1;
+      }
+       u8matchconserver1=u8letter1[0];
+      if(u8counter4%2==0)
+      {
+        AntQueueBroadcastMessage(u8au8TestMessage2);
+      }
+      else
+      {
+      AntQueueBroadcastMessage(u8letter1);
+      }
+     }
+   }
+}
+/*Back to input number*/
  if( WasButtonPressed(BUTTON0))
   {
    ButtonAcknowledge(BUTTON0);
+    u8counter=0;
     AntQueueBroadcastMessage(u8letter3);
      LCDCommand(LCD_CLEAR_CMD);
-     LCDMessage(LINE1_START_ADDR, au8Message);
-    LCDMessage(LINE2_START_ADDR, au8Message1); 
+     LCDMessage(LINE1_START_ADDR, u8au8Message);
+    LCDMessage(LINE2_START_ADDR, u8au8Message1); 
     UserApp_StateMachine = UserAppSM_Idle;
   }
-  }
+ }
 }      
        
       
