@@ -68,7 +68,8 @@ static u8 au8TestMessage[1]={0};
 static u8 au8TestMessage1[1]={0};
 static u8 au8DataContent[1] = {0};
 static u16 u16frequency[] = {0,523,586,658,697,783,879,987,262,293,329,349,392,440,494,1045,1171,1316,1393,1563,1755,1971};
-static u8 u8letter[]={'A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','\0'}; 
+static u8 u8letter[]={'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','\0'}; 
+static u8 u8letter4[]={'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\0'}; 
 static u8 u8letter1[]="A";
 static u8 u8letter2[]={50};
 static u8 u8letter3[]={200};
@@ -561,6 +562,7 @@ static void UserAppSM_Idle(void)
     LedOff(ORANGE);
     LedOff(RED);
     LCDCommand(LCD_CLEAR_CMD);
+    au8TestMessage[0]=au8TestMessage[0]-14;
     LCDMessage(LINE1_START_ADDR, u8au8Message2);
     LCDMessage(LINE2_START_ADDR, u8au8Message3);
     LCDMessage(LINE1_START_ADDR+19, u8letter1);
@@ -593,7 +595,7 @@ static void UserAppSM_namemoudle(void)
       ButtonAcknowledge(BUTTON1);
        u8letter1[0]=u8letter[u8u8countername];
        u8u8countername++;
-       if(u8u8countername==25)
+       if(u8u8countername==26)
        {
          u8u8countername=0;
        }
@@ -601,7 +603,12 @@ static void UserAppSM_namemoudle(void)
     if(WasButtonPressed(BUTTON2))
     { 
       ButtonAcknowledge(BUTTON2);
-      u8letter1[0]=u8letter1[0]+32;
+      u8letter1[0]=u8letter4[u8u8countername-1];
+      if(u8u8countername==26)
+       {
+         u8u8countername=0;
+       } 
+      u8u8countername++;
     }
    if( AntReadData() )
   {
