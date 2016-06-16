@@ -71,10 +71,11 @@ static u16 u16frequency[] = {0,523,586,658,697,783,879,987,262,293,329,349,392,4
 static u8 u8letter[]={'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','\0'}; 
 static u8 u8letter4[]={'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\0'}; 
 static u8 u8letter1[]="A";
-static u8 u8letter2[]={50};
-static u8 u8letter3[]={200};
-static u8 u8au8TestMessage2[1]={30};
-static u8 u8u8countername=1;
+static u8 u8letter2[]={50};            /*save fixed digital ,it is signal to send*/
+static u8 u8letter3[]={200};            /*save fixed digital ,it is signal to send*/
+static u8 u8au8TestMessage2[1]={30};      /*save fixed digital ,it is signal to send*/
+static u8 u8u8countername=0;              
+static u8 u8u8countername1=0;
 static u8 u8au8Message[] = "The  accent is :";
 static u8 u8au8Message1[] = "send  up  low  high";
 static u8 u8au8Message2[] = "please input name:";
@@ -180,11 +181,13 @@ static void UserAppSM_Idle(void)
 {
    u8counter++;
    u8counter1buzzeroff++;
+   /*control buzzer*/
    if( u8counter1buzzeroff==200)
    {
      u8counter1buzzeroff=0;
      PWMAudioSetFrequency(BUZZER1, 0); 
    }
+   /* main looper*/
    if(u8counter==20)
    {
      u8counter=0;
@@ -199,6 +202,7 @@ static void UserAppSM_Idle(void)
      }
      au8DataContent[0]=au8TestMessage1[0]+0x30;
      LCDMessage(LINE1_START_ADDR+19, au8DataContent);
+     /* increase the accent*/
     if( WasButtonPressed(BUTTON1) )
     {
       ButtonAcknowledge(BUTTON1);
@@ -208,12 +212,14 @@ static void UserAppSM_Idle(void)
         au8TestMessage[0]=0;
       }
     }
+   /*it will let the accent become low*/
   if( WasButtonPressed(BUTTON2) )
   {
     ButtonAcknowledge(BUTTON2);
     LCDMessage(LINE1_START_ADDR+17, u8au8Message5);
     au8TestMessage[0]=au8TestMessage[0]+7;
   } 
+  /*it will let the accent become high*/
   if( WasButtonPressed(BUTTON3) )
   {
     ButtonAcknowledge(BUTTON3);
@@ -593,8 +599,10 @@ static void UserAppSM_namemoudle(void)
     if(WasButtonPressed(BUTTON1))
     { 
       ButtonAcknowledge(BUTTON1);
-       u8letter1[0]=u8letter[u8u8countername];
-       u8u8countername++;
+      u8u8countername++;
+       u8letter1[0]=u8letter[u8u8countername-1];
+       
+       u8u8countername1=u8u8countername-1;
        if(u8u8countername==26)
        {
          u8u8countername=0;
@@ -603,12 +611,14 @@ static void UserAppSM_namemoudle(void)
     if(WasButtonPressed(BUTTON2))
     { 
       ButtonAcknowledge(BUTTON2);
-      u8letter1[0]=u8letter4[u8u8countername-1];
-      if(u8u8countername==26)
+      u8u8countername1++;
+      u8letter1[0]=u8letter4[u8u8countername1-1];
+      
+      if(u8u8countername1==26)
        {
-         u8u8countername=0;
+         u8u8countername1=0;
        } 
-      u8u8countername++;
+      u8u8countername=u8u8countername1-1;
     }
    if( AntReadData() )
   {
